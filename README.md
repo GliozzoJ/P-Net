@@ -173,9 +173,7 @@ Now we can simply plot the graph coming from the similarity matrix to gain some 
 ```
 plot.pnet.graph(C, ind.poor, pnet_res_loo$s, colour="green", file.name="graph.eps", mode="dot", fontsize=12, magn=25)
 ```
-![alt text][graph]
-
-[graph]: https://github.com/GliozzoJ/P-Net/blob/master/graph.eps "Example of graph visualization"
+![alt text](https://github.com/GliozzoJ/P-Net/blob/master/graph.eps)
 
 In this plot patients are represented as nodes and similarities between patients through edges. Positive patients, i.e. patients having the phenotype of interest are represented as squares, while the other patients are represented with circles. The scores obtained by the algorithm are represented through shaded colours. Patients with the highest scores are represented through more intense colours, while patients having the lowest scores with light shades of color.
 
