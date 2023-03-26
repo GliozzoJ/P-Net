@@ -235,7 +235,6 @@ setGeneric("pnet.cv",
 				 
 setMethod("pnet.cv", signature(W="matrix"), 
   function(W, ind.pos, kk=5, score=eav.score, probs=seq(0.1, 1, 0.1), intloo=TRUE, seed=NULL, ...) {
-	score.name <- return.name(score);
 	m <- nrow(W);
 	x <- 1:m;
 	f <- do.stratified.cv.data(1:m, ind.pos, k=kk, seed=seed);    
@@ -247,15 +246,7 @@ setMethod("pnet.cv", signature(W="matrix"),
 	  for (i in 1:kk)  {
 	    ind.train <- setdiff(x, c(f$fold.non.positives[[i]],f$fold.positives[[i]]));
 	    ind.pos.train<-setdiff(ind.pos,f$fold.positives[[i]]);
-	    if (score.name == "KNN.score")
-	            q[i] <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs, norm=FALSE, k=k, ...)$quantile
-	    else if (score.name == "WSLD.score")								   
-		    q[i] <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs, norm=FALSE, d=d, ...)$quantile
-	    else if (score.name == "tot.score" || score.name == "diff.score" || score.name == "dnorm.score")			   
-		    q[i] <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs)$quantile
-	    else
-		    q[i] <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs, norm=FALSE, ...)$quantile;
-
+	    q[i] <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs, ...)$quantile
 	  }
 	  thresh <- quantile(W,probs=mean(q));	
 	} else {
@@ -267,14 +258,8 @@ setMethod("pnet.cv", signature(W="matrix"),
 	for (i in 1:kk)  {
 	  ind.test <- c(f$fold.non.positives[[i]],f$fold.positives[[i]]);
 	  ind.pos.fold<-setdiff(ind.pos,f$fold.positives[[i]]);
-	  if (score.name == "KNN.score")  				  
- 	  	s[ind.test] <- score(W, ind.test, ind.pos.fold, k=k, norm=FALSE, ...)   
-    	  else if (score.name == "WSLD.score")		  
- 	  	s[ind.test] <- score(W, ind.test, ind.pos.fold, d=d, norm=FALSE, ...) 
-    	  else if (score.name == "tot.score" || score.name == "diff.score" || score.name == "dnorm.score") 
-          	s[ind.test] <- score(W, ind.test, ind.pos.fold) 
-    	  else										  
- 	  	s[ind.test] <- score(W, ind.test, ind.pos.fold, norm=FALSE, ...); 
+ 	  s[ind.test] <- score(W, ind.test, ind.pos.fold, ...);   
+  
 	}
 	mm<-max(s);
 	if (mm > 0)
@@ -317,7 +302,6 @@ setGeneric("pnet.heldout",
 setMethod("pnet.heldout", signature(W="matrix"),
   function(W, ind.pos, test=0.3, score=eav.score, probs=seq(0.1, 1, 0.1), intloo=TRUE, seed=NULL, ...) {
     set.seed(seed);
-	score.name <- return.name(score);
 	m <- nrow(W);
 	x <- 1:m;
 	s  <- numeric(m);
@@ -331,29 +315,14 @@ setMethod("pnet.heldout", signature(W="matrix"),
 	
 	# computing the optimal threshold by loo w.r.t. the training set	
 	if (intloo) {
-	  if (score.name == "KNN.score") 
-	     q <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs, norm=FALSE, k=k, ...)$quantile
-	  else if (score.name == "WSLD.score")								   
-             q <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs, norm=FALSE, d=d, ...)$quantile
-	  else if (score.name == "tot.score" || score.name == "diff.score" || score.name == "dnorm.score")			   
-	     q <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs)$quantile
-	  else
-	     q <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs, norm=FALSE, ...)$quantile;
-          }
-	else {
+	     q <- optimize.thresh.by.loo(W, ind.pos.train, ind.train, score=score, probs=probs, ...)$quantile
+    } else {
 	   q <- probs;
-        }
+    }
 	thresh <- quantile(W,probs=q);	
 	W[W<thresh] <- 0;
 	# test on held.out data
-        if (score.name == "KNN.score")  				  
- 	   s <- score(W, x, ind.pos.train, k=k, norm=FALSE, ...)   
-    	else if (score.name == "WSLD.score")		  
- 	   s <- score(W, x, ind.pos.train, d=d, norm=FALSE, ...) 
-    	else if (score.name == "tot.score" || score.name == "diff.score" || score.name == "dnorm.score") 
-           s <- score(W, x, ind.pos.train) 
-    	else										  
- 	   s <- score(W, x, ind.pos.train, norm=FALSE, ...);
+    s <- score(W, x, ind.pos.train, ...)   
 
 	mm<-max(s);
 	if (mm > 0)
@@ -921,7 +890,6 @@ setGeneric("pnet.class.cv",
 setMethod("pnet.class.cv", signature(W="matrix"), 
   function(W, ind.pos, kk=5, score=eav.score, probs=seq(0.1, 1, 0.1), score.probs=seq(0.01, 1, 0.01), intloo=TRUE, opt.fun=compute.F, seed=1, ...) {
     
-	score.name <- return.name(score);
 	# filtering of the net
     res <- pnet.cv(W, ind.pos, kk=5, score=score, probs=probs, intloo=intloo, seed=seed, ...);
 	
@@ -943,14 +911,7 @@ setMethod("pnet.class.cv", signature(W="matrix"),
 	  ind.train <- x[-ind.test];
 	  ind.pos.train <- setdiff(ind.pos,ind.test);	  
 	  labels.train <- labels[ind.train];	  
-          if (score.name == "KNN.score")  				  
- 	  	scores.train <- score(W, ind.train, ind.pos.train, k=k, norm=FALSE, ...)   
-    	  else if (score.name == "WSLD.score")		  
- 	  	scores.train <- score(W, ind.train, ind.pos.train, d=d, norm=FALSE, ...) 
-    	  else if (score.name == "tot.score" || score.name == "diff.score" || score.name == "dnorm.score") 
-          	scores.train <- score(W, ind.train, ind.pos.train) 
-    	  else										  
- 	  	scores.train <- score(W, ind.train, ind.pos.train, norm=FALSE, ...); 
+ 	  scores.train <- score(W, ind.train, ind.pos.train, ...)   
 	  q.score[j] <- 0;
 	  opt.F <- 0;
 	  for (qq in score.probs) {
@@ -1019,7 +980,6 @@ setGeneric("pnet.class.loo",
 setMethod("pnet.class.loo", signature(W="matrix"), 
   function(W, ind.pos, score=eav.score, probs=seq(0.1, 1, 0.1), score.probs=seq(0.01, 1, 0.01), intloo=TRUE, opt.fun=compute.F, ...) {
     
-	score.name <- return.name(score);
 	# filtering of the net
     res <- pnet.loo(W, ind.pos,  score=score, probs=probs, intloo=intloo,  ...);
 	
@@ -1036,14 +996,7 @@ setMethod("pnet.class.loo", signature(W="matrix"),
 	
 	# cycling on the kk folds: score thresh (quantiles) are computed on the training data and used to classify on the test set
 	for (j in 1:m) {
-          if (score.name == "KNN.score")  				  
- 	  	scores.train <- score(W, x[-j], setdiff(ind.pos,j), k=k, norm=FALSE, ...)   
-    	  else if (score.name == "WSLD.score")		  
- 	  	scores.train <- score(W, x[-j], setdiff(ind.pos,j), d=d, norm=FALSE, ...) 
-    	  else if (score.name == "tot.score" || score.name == "diff.score" || score.name == "dnorm.score") 
-          	scores.train <- score(W, x[-j], setdiff(ind.pos,j)) 
-    	  else										  
- 	  	scores.train <- score(W, x[-j], setdiff(ind.pos,j), norm=FALSE, ...); 
+ 	  scores.train <- score(W, x[-j], setdiff(ind.pos,j), norm=TRUE, ...)   
 	  labels.train <- labels[-j];	  
 	  q.score[j] <- 0;
 	  opt.F <- 0;
